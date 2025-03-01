@@ -1,135 +1,210 @@
-"use client"
+"use client";
+
 import { useState } from "react";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 
-export default function App() {
+const API_BASE_URL = "https://netoptimizebackend-production.up.railway.app"; // Backend URL
+
+function App() {
+  // Policy Analysis State
   const [country, setCountry] = useState("");
   const [regulationText, setRegulationText] = useState("");
-  const [regulationResponse, setRegulationResponse] = useState(null);
+  const [regulationResponse, setRegulationResponse] = useState("");
+  const [loadingRegulation, setLoadingRegulation] = useState(false);
+  const [regulationError, setRegulationError] = useState("");
 
-  const [regionData, setRegionData] = useState("");
-  const [requirements, setRequirements] = useState("");
-  const [networkResponse, setNetworkResponse] = useState(null);
+  // Network Optimization State
+  const [networkRegion, setNetworkRegion] = useState("");
+  const [terrainData, setTerrainData] = useState("");
+  const [existingInfrastructure, setExistingInfrastructure] = useState("");
+  const [networkBudget, setNetworkBudget] = useState("");
+  const [networkResponse, setNetworkResponse] = useState("");
+  const [loadingNetwork, setLoadingNetwork] = useState(false);
+  const [networkError, setNetworkError] = useState("");
 
+  // Resource Allocation State
+  const [resourceRegion, setResourceRegion] = useState("");
   const [existingAssets, setExistingAssets] = useState("");
   const [connectivityGoals, setConnectivityGoals] = useState("");
-  const [resourceResponse, setResourceResponse] = useState(null);
+  const [resourceBudget, setResourceBudget] = useState("");
+  const [resourceResponse, setResourceResponse] = useState("");
+  const [loadingResource, setLoadingResource] = useState(false);
+  const [resourceError, setResourceError] = useState("");
 
-  const API_BASE_URL = "http://127.0.0.1:8000"; 
-
+  // Analyze Telecom Policy
   const handleAnalyzeRegulation = async () => {
+    if (!country || !regulationText) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    setLoadingRegulation(true);
+    setRegulationError("");
+
     try {
-      const response = await axios.post(`${API_BASE_URL}/analyze_regulation`, {
+      const response = await axios.post(`${API_BASE_URL}/analyze_policy/`, {
         country,
-        regulation_text: regulationText,
+        policy_text: regulationText,
       });
-      setRegulationResponse(response.data.analysis);
+      const formattedResponse = "```json\n" + JSON.stringify(response.data, null, 2) + "\n```";
+      setRegulationResponse(formattedResponse);
     } catch (error) {
+      setRegulationError("Failed to analyze regulation. Please try again.");
       console.error("Error analyzing regulation:", error);
+    } finally {
+      setLoadingRegulation(false);
     }
   };
 
+  // Optimize Network Design
   const handleOptimizeNetwork = async () => {
+    if (!networkRegion || !terrainData || !existingInfrastructure || !networkBudget) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    setLoadingNetwork(true);
+    setNetworkError("");
+
     try {
-      const response = await axios.post(`${API_BASE_URL}/optimize_network`, {
-        region_data: regionData,
-        requirements,
+      const response = await axios.post(`${API_BASE_URL}/optimize_network/`, {
+        region: networkRegion,
+        budget: Number(networkBudget),
+        existing_infrastructure: existingInfrastructure.split(","),
+        terrain_data: terrainData,
       });
-      setNetworkResponse(response.data.network_plan);
+      const formattedResponse = "```json\n" + JSON.stringify(response.data, null, 2) + "\n```";
+      setNetworkResponse(formattedResponse);
     } catch (error) {
+      setNetworkError("Failed to optimize network. Please try again.");
       console.error("Error optimizing network:", error);
+    } finally {
+      setLoadingNetwork(false);
     }
   };
 
+  // Optimize Resource Allocation
   const handleOptimizeResources = async () => {
+    if (!resourceRegion || !existingAssets || !connectivityGoals || !resourceBudget) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    setLoadingResource(true);
+    setResourceError("");
+
     try {
-      const response = await axios.post(`${API_BASE_URL}/optimize_resources`, {
-        existing_assets: existingAssets,
-        connectivity_goals: connectivityGoals,
+      const response = await axios.post(`${API_BASE_URL}/resource_allocation/`, {
+        region: resourceRegion,
+        budget: Number(resourceBudget),
+        existing_assets: existingAssets.split(","),
+        user_demand: connectivityGoals,
       });
-      setResourceResponse(response.data.optimization_suggestions);
+      const formattedResponse = "```json\n" + JSON.stringify(response.data, null, 2) + "\n```";
+      setResourceResponse(formattedResponse);
     } catch (error) {
+      setResourceError("Failed to optimize resources. Please try again.");
       console.error("Error optimizing resources:", error);
+    } finally {
+      setLoadingResource(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-8">
-      <h1 className="text-2xl font-bold">NetOptimize AI Frontend</h1>
-      
-      {/* Regulation Analysis Section */}
-      <div className="p-4 border rounded-lg shadow">
-        <h2 className="text-xl font-semibold">Regulation Analysis</h2>
+    <div style={{ padding: "20px" }}>
+      <h1>NetOptimize AI</h1>
+
+      {/* Policy Analysis Section */}
+      <div>
+        <h2>Policy & Regulation Analysis</h2>
         <input
           type="text"
-          className="border p-2 w-full mt-2"
           placeholder="Country"
           value={country}
           onChange={(e) => setCountry(e.target.value)}
         />
         <textarea
-          className="border p-2 w-full mt-2"
-          placeholder="Regulation Text"
+          placeholder="Enter telecom policy text"
           value={regulationText}
           onChange={(e) => setRegulationText(e.target.value)}
-        ></textarea>
-        <button
-          className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={handleAnalyzeRegulation}
-        >
-          Analyze Regulation
+        />
+        <button onClick={handleAnalyzeRegulation} disabled={loadingRegulation}>
+          {loadingRegulation ? "Analyzing..." : "Analyze Policy"}
         </button>
-        {regulationResponse && <p className="mt-2">{regulationResponse}</p>}
+        {regulationError && <p style={{ color: "red" }}>{regulationError}</p>}
+        <ReactMarkdown>{regulationResponse}</ReactMarkdown>
       </div>
-      
+
       {/* Network Optimization Section */}
-      <div className="p-4 border rounded-lg shadow">
-        <h2 className="text-xl font-semibold">Network Design Optimization</h2>
-        <textarea
-          className="border p-2 w-full mt-2"
-          placeholder="Region Data"
-          value={regionData}
-          onChange={(e) => setRegionData(e.target.value)}
-        ></textarea>
-        <textarea
-          className="border p-2 w-full mt-2"
-          placeholder="Requirements"
-          value={requirements}
-          onChange={(e) => setRequirements(e.target.value)}
-        ></textarea>
-        <button
-          className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
-          onClick={handleOptimizeNetwork}
-        >
-          Optimize Network
+      <div>
+        <h2>Network Design Optimization</h2>
+        <input
+          type="text"
+          placeholder="Region"
+          value={networkRegion}
+          onChange={(e) => setNetworkRegion(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Terrain Data"
+          value={terrainData}
+          onChange={(e) => setTerrainData(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Existing Infrastructure (comma-separated)"
+          value={existingInfrastructure}
+          onChange={(e) => setExistingInfrastructure(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Budget"
+          value={networkBudget}
+          onChange={(e) => setNetworkBudget(e.target.value)}
+        />
+        <button onClick={handleOptimizeNetwork} disabled={loadingNetwork}>
+          {loadingNetwork ? "Optimizing..." : "Optimize Network"}
         </button>
-        {networkResponse && <p className="mt-2">{networkResponse}</p>}
+        {networkError && <p style={{ color: "red" }}>{networkError}</p>}
+        <ReactMarkdown>{networkResponse}</ReactMarkdown>
       </div>
-      
-      {/* Resource Optimization Section */}
-      <div className="p-4 border rounded-lg shadow">
-        <h2 className="text-xl font-semibold">Resource Allocation Optimization</h2>
-        <textarea
-          className="border p-2 w-full mt-2"
-          placeholder="Existing Assets"
+
+      {/* Resource Allocation Section */}
+      <div>
+        <h2>Resource Allocation Optimization</h2>
+        <input
+          type="text"
+          placeholder="Region"
+          value={resourceRegion}
+          onChange={(e) => setResourceRegion(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Existing Assets (comma-separated)"
           value={existingAssets}
           onChange={(e) => setExistingAssets(e.target.value)}
-        ></textarea>
-        <textarea
-          className="border p-2 w-full mt-2"
-          placeholder="Connectivity Goals"
+        />
+        <input
+          type="text"
+          placeholder="User Demand"
           value={connectivityGoals}
           onChange={(e) => setConnectivityGoals(e.target.value)}
-        ></textarea>
-        <button
-          className="mt-2 bg-purple-500 text-white px-4 py-2 rounded"
-          onClick={handleOptimizeResources}
-        >
-          Optimize Resources
+        />
+        <input
+          type="number"
+          placeholder="Budget"
+          value={resourceBudget}
+          onChange={(e) => setResourceBudget(e.target.value)}
+        />
+        <button onClick={handleOptimizeResources} disabled={loadingResource}>
+          {loadingResource ? "Optimizing..." : "Optimize Resources"}
         </button>
-        {resourceResponse && <p className="mt-2">{resourceResponse}</p>}
+        {resourceError && <p style={{ color: "red" }}>{resourceError}</p>}
+        <ReactMarkdown>{resourceResponse}</ReactMarkdown>
       </div>
     </div>
   );
 }
- 
+
+export default App;
